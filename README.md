@@ -9,3 +9,4 @@ Technologies used:
 5) Ganache
 6) Ethereum
 7) Geth
+8) Metamask
