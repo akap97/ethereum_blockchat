@@ -40,7 +40,7 @@ App = {
       account = accs[0];
       if (!account) {
         App.setStatus("Please login to MetaMask");
-        alert("Could not fetch your account. Make sure you are logged in to MetaMask, then refresh the page.");
+        //alert("Could not fetch your account. Make sure you are logged in to MetaMask, then refresh the page.");
         return;
       }
       return App.initContract();
@@ -315,5 +315,6 @@ App = {
 };
 
 $(document).ready(function() {
-  App.init();
+
+App.init();
 });
