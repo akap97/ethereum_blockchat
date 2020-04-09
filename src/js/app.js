@@ -315,6 +315,16 @@ App = {
 };
 
 $(document).ready(function() {
-
+//preloader start
+/*(function($){
+  'use strict';
+    $(window).on('load', function () {
+        if ($(".pre-loader").length > 0)
+        {
+            $(".pre-loader").delay(400).fadeOut("slow");
+        }
+    });
+})(jQuery)*/
+//preloader end
 App.init();
 });
