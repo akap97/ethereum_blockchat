@@ -1,6 +1,6 @@
 # ethereum_blockchat
 
-## A decentralized chatroom based on ethereum.
+## A decentralized secure messaging solution based on ethereum.
 
 ## Technologies used:
 
