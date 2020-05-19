@@ -7,6 +7,13 @@ contract BlockChat {
     bytes32 content;
     uint timestamp;
   }
+  //GroupMessage
+  struct GroupMessage {
+    address sender;
+    bytes32 content;
+    bytes32 groupname;
+    uint timestamp;
+  }
 
   struct ContractProperties {
     address BlockChatOwner;
@@ -19,13 +26,35 @@ contract BlockChat {
     mapping (uint => Message) sentMessages;
     mapping (uint => Message) receivedMessages;
   }
-
+  //group
+  struct GroupInbox {
+    uint numSentGroupMessages;
+    uint numReceivedGroupMessages;
+    mapping (uint => GroupMessage) sentGroupMessages;
+    mapping (uint => GroupMessage) receivedGroupMessages;
+  }
+  //Inbox mapping
   mapping (address => Inbox) userInboxes;
   mapping (address => bool) hasRegistered;
 
+  //group mapping
+  mapping (address => GroupInbox) userGroupInboxes;
+  mapping (address => bool) hasRegisteredGroupInbox;
+
+  //Inbox instance
   Inbox newInbox;
-  uint donationsInWei = 0;
+
+  //Message instance
   Message newMessage;
+
+  //GroupMessage instance
+  GroupMessage newGroupMessage;
+
+  //group instance
+  GroupInbox newGroupInbox;
+
+
+  uint donationsInWei = 0;
   ContractProperties contractProperties;
 
   function BlockChat() public {
@@ -42,11 +71,16 @@ contract BlockChat {
     userInboxes[msg.sender] = newInbox;
   }
 
-  function registerUser() public {
+  function registerUser() public  {
     if(!hasRegistered[msg.sender]) {
       userInboxes[msg.sender] = newInbox;
       hasRegistered[msg.sender] = true;
       contractProperties.registeredUsersAddress.push(msg.sender);
+    }
+    //registering group for
+    if(!hasRegisteredGroupInbox[msg.sender]) {
+      userGroupInboxes[msg.sender] = newGroupInbox;
+      hasRegisteredGroupInbox[msg.sender] = true;
     }
   }
 
@@ -58,6 +92,7 @@ contract BlockChat {
     newMessage.content = _content;
     newMessage.timestamp = now;
     newMessage.sender = msg.sender;
+    
     // Update senders inbox
     Inbox storage sendersInbox = userInboxes[msg.sender];
     sendersInbox.sentMessages[sendersInbox.numSentMessages] = newMessage;
@@ -67,6 +102,44 @@ contract BlockChat {
     Inbox storage receiversInbox = userInboxes[_receiver];
     receiversInbox.receivedMessages[receiversInbox.numReceivedMessages] = newMessage;
     receiversInbox.numReceivedMessages++;
+    return;
+  }
+   //group messages
+   function sendGroupMessage(address[] _receiver, bytes32 _groupname, bytes32 _content) public {
+    newGroupMessage.content = _content;
+    newGroupMessage.timestamp = now;
+    newGroupMessage.groupname=_groupname;
+    newGroupMessage.sender = msg.sender;
+    
+    // Update senders groupinbox
+    GroupInbox storage sendersGroupInbox = userGroupInboxes[msg.sender];
+    sendersGroupInbox.sentGroupMessages[sendersGroupInbox.numSentGroupMessages] = newGroupMessage;
+    sendersGroupInbox.numSentGroupMessages++;
+
+    // Update receivers inbox
+    for(uint i=0;i<_receiver.length;i++) {
+    GroupInbox storage receiversGroupInbox = userGroupInboxes[_receiver[i]];
+    receiversGroupInbox.receivedGroupMessages[receiversGroupInbox.numReceivedGroupMessages] = newGroupMessage;
+    receiversGroupInbox.numReceivedGroupMessages++;
+    }
+    return;
+  }
+  //broadcast message
+  function broadcastMessage(address[] _receiver, bytes32 _content) public {
+    newMessage.content = _content;
+    newMessage.timestamp = now;
+    newMessage.sender = msg.sender;
+    // Update senders inbox
+    Inbox storage sendersInbox = userInboxes[msg.sender];
+    sendersInbox.sentMessages[sendersInbox.numSentMessages] = newMessage;
+    sendersInbox.numSentMessages++;
+
+    // Update receivers inbox
+    for(uint i=0;i<_receiver.length;i++) {
+    Inbox storage receiversInbox = userInboxes[_receiver[i]];
+    receiversInbox.receivedMessages[receiversInbox.numReceivedMessages] = newMessage;
+    receiversInbox.numReceivedMessages++;
+    }
     return;
   }
 
@@ -84,8 +157,30 @@ contract BlockChat {
     return (content, timestamp, sender);
   }
 
+  //recieve group messages
+  function receiveGroupMessages() public view returns (bytes32[16], bytes32[16], uint[], address[]) {
+    GroupInbox storage receiversGroupInbox = userGroupInboxes[msg.sender];
+    bytes32[16] memory content;
+    bytes32[16] memory groupname;
+    address[] memory sender = new address[](16);
+    uint[] memory timestamp = new uint[](16);
+    for (uint m = 0; m < 15; m++) {
+      GroupMessage memory groupmessage = receiversGroupInbox.receivedGroupMessages[m];
+      content[m] = groupmessage.content;
+      sender[m] = groupmessage.sender;
+      timestamp[m] = groupmessage.timestamp;
+      groupname[m]=groupmessage.groupname;
+    }
+    return (content,groupname, timestamp, sender);
+  }
+
+
   function getMyInboxSize() public view returns (uint, uint) {
     return (userInboxes[msg.sender].numSentMessages, userInboxes[msg.sender].numReceivedMessages);
+  }
+  //group getgroupsize
+  function getMyGroupInboxSize() public view returns (uint, uint) {
+    return (userGroupInboxes[msg.sender].numSentGroupMessages, userGroupInboxes[msg.sender].numReceivedGroupMessages);
   }
 
 }
